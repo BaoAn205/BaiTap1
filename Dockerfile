@@ -1,14 +1,17 @@
-# Dùng Tomcat 9 kèm JDK 17
-FROM tomcat:9.0-jdk17
+# Stage 1: build WAR
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Xóa app mặc định (ROOT)
+# Stage 2: run với Tomcat 10.1 (Jakarta Servlet 6.0)
+FROM tomcat:10.1-jdk17
+
+# Xóa app mặc định
 RUN rm -rf /usr/local/tomcat/webapps/*
 
-# Copy file WAR của bạn vào Tomcat
-COPY target/BaiTap1-1.0-SNAPSHOT.war /usr/local/tomcat/webapps/ROOT.war
+# Copy WAR đã build vào ROOT
+COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/ROOT.war
 
-# Mở cổng 8080
 EXPOSE 8080
-
-# Start Tomcat
 CMD ["catalina.sh", "run"]
